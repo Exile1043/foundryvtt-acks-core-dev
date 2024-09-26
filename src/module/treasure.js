@@ -41,14 +41,19 @@ async function drawTreasure(table, data) {
       if (roll.total <= result.weight) {
         if (result.type === CONST.TABLE_RESULT_TYPES.TEXT) {
           const text = result.getChatText();
-          data.treasure[result.id] = ({
-            img: result.img,
-            text: await TextEditor.enrichHTML(text),
-          });
-        }
-
-        if ((result.type === CONST.TABLE_RESULT_TYPES.DOCUMENT)
-            && (result.documentCollection === "RollTable")) {
+          if (text.includes("#")){
+            // split input string where first part is dice formula and second part is RollTable UUID
+            const splitInput = result.documentId.split("#");
+            const embeddedTable = game.tables.get(splitInput[1]);
+            await drawMultipleEmbeddedTreasure(embeddedTable, data, splitInput[0]);
+          } else {
+            data.treasure[result.id] = ({
+              img: result.img,
+              text: await TextEditor.enrichHTML(text),
+            });
+          }          
+        } else if ((result.type === CONST.TABLE_RESULT_TYPES.DOCUMENT)
+                && (result.documentCollection === "RollTable")) {
           const embeddedTable = game.tables.get(result.documentId);
           await drawEmbeddedTreasure(embeddedTable, data);
         }
@@ -74,6 +79,21 @@ async function drawEmbeddedTreasure(table, data) {
         text: await TextEditor.enrichHTML(text),
       };
     }
+}
+
+async function drawMultipleEmbeddedTreasure(table, data, rollFormula) {
+  let diceRoll = new Roll(rollFormula);
+  await diceRoll.evaluate();
+  for(let i = 0; i < diceRoll.total; i++) {
+    const roll = await table.roll();
+    for(const result of roll.results) {
+      const text = result.getChatText();
+      data.treasure[result.id] = {
+        img: result.img,
+        text: await TextEditor.enrichHTML(text),
+      };
+    }
+  }
 }
 
 async function rollTreasure(table, options = {}) {
