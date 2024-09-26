@@ -46,9 +46,9 @@ async function drawTreasure(table, data) {
         });
 
         if ((result.type === CONST.TABLE_RESULT_TYPES.DOCUMENT)
-            && (result.collection === "RollTable")) {
-          const embeddedTable = game.tables.get(result.resultId);
-          drawTreasure(embeddedTable, data.treasure[result.id]);
+            && (result.documentCollection === "RollTable")) {
+          const embeddedTable = game.tables.get(result.documentId);
+          await drawEmbeddedTreasure(embeddedTable, data);
         }
       }
     }
@@ -61,6 +61,17 @@ async function drawTreasure(table, data) {
   }
 
   return data;
+}
+
+async function drawEmbeddedTreasure(table, data) {
+    const roll = await table.roll();
+    for(const result of roll.results) {
+      const text = result.getChatText();
+      data.treasure[result.id] = {
+        img: result.img,
+        text: await TextEditor.enrichHTML(text),
+      };
+    }
 }
 
 async function rollTreasure(table, options = {}) {
