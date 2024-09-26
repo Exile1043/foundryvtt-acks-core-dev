@@ -39,11 +39,13 @@ async function drawTreasure(table, data) {
       await roll.evaluate();
 
       if (roll.total <= result.weight) {
-        const text = result.getChatText();
-        data.treasure[result.id] = ({
-          img: result.img,
-          text: await TextEditor.enrichHTML(text),
-        });
+        if (result.type === CONST.TABLE_RESULT_TYPES.TEXT) {
+          const text = result.getChatText();
+          data.treasure[result.id] = ({
+            img: result.img,
+            text: await TextEditor.enrichHTML(text),
+          });
+        }
 
         if ((result.type === CONST.TABLE_RESULT_TYPES.DOCUMENT)
             && (result.documentCollection === "RollTable")) {
